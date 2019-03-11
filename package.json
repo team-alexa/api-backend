@@ -1,0 +1,23 @@
+{
+  "name": "api-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "student.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/team-alexa/api-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/team-alexa/api-backend/issues"
+  },
+  "homepage": "https://github.com/team-alexa/api-backend#readme",
+  "dependencies": {
+    "mysql": "^2.16.0",
+    "vandium": "^4.10.0"
+  }
+}
