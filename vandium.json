@@ -1,0 +1,16 @@
+{
+    "jwt": {
+
+        "algorithm": "<algorithm-type>",
+        "publicKey": "<public key>",        // if using RS256
+        "secret": "<secret value>",         // if using HS256, HS384 or HS512
+        "token": "<token path inside event>",
+        "xsrf": "true | false",
+        "xsrfToken": "<xsrf token path inside element>",
+        "xsrfClaim": "<xsrf claim path inside jwt element>"
+    },
+    "prevent": {
+
+        "eval": "true | false"              // prevents the use of eval()
+    }
+}

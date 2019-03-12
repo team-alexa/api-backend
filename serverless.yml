@@ -40,6 +40,7 @@ functions:
                 firstName: false
                 lastName: false
                 index: false
+                fullName: false
       - http:
           method: post
           cors: true
@@ -67,18 +68,14 @@ functions:
           request:
             parameters:
               querystrings:
-                teacherID: true
+                teacherID: false
+                firstName: false
+                lastName: false
+                fullName: false
       - http:
           method: post
           cors: true
           path: teachers
-          request:
-            parameters:
-              querystrings:
-                method: True
-                firstName: True
-                lastName: True
-                nickName: false
 
 
   logs:
@@ -101,15 +98,9 @@ functions:
       - http:
           method: post
           cors: true
-          path: logs
-          request:
-            parameters:
-              querystrings:
-                method: True
-                studentID: True
-                teacherID: True
-                activityType: True
-                activityDetails: True
+          path: logs 
+            
+
   nicknames:
     handler: nickname.handler
     events:
