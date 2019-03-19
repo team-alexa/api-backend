@@ -4,7 +4,7 @@
   "description": "",
   "main": "student.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "debug": "export SLS_DEBUG=* && node --inspect /usr/local/bin/serverless offline -s dev"
   },
   "repository": {
     "type": "git",
@@ -17,7 +17,10 @@
   },
   "homepage": "https://github.com/team-alexa/api-backend#readme",
   "dependencies": {
-    "mysql": "^2.16.0",
+    "promise-mysql": "^3.3.1",
     "vandium": "^4.10.0"
+  },
+  "devDependencies": {
+    "serverless-offline": "^4.9.1"
   }
 }

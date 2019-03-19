@@ -16,7 +16,8 @@ service: aws-nodejs # Next Door API
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
-
+plugins:
+  - serverless-offline
 provider:
   name: aws
   runtime: nodejs8.10
