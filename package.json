@@ -4,7 +4,7 @@
   "description": "",
   "main": "student.js",
   "scripts": {
-    "debug": "export SLS_DEBUG=* && node --inspect /usr/local/bin/serverless offline -s dev"
+    "start": "export SLS_DEBUG=* && node --inspect /usr/local/bin/serverless offline -s dev"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/team-alexa/api-backend#readme",
   "dependencies": {
+    "mysql-promise": "^5.0.0",
     "promise-mysql": "^3.3.1",
     "vandium": "^4.10.0"
   },

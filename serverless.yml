@@ -100,17 +100,3 @@ functions:
           method: post
           cors: true
           path: logs 
-            
-
-  nicknames:
-    handler: nickname.handler
-    events:
-      - http:
-          method: get
-          cors: true
-          path: nicknames
-          request:
-            parameters:
-              querystrings:
-                studentfirstName: true
-                teacherfirstName : true
