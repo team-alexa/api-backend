@@ -14,6 +14,17 @@ module.exports.handler = vandium.api()
 		mode: 'fail'
 	})
 	.GET(
+		{
+			queryStringParameters: {
+			studentID: vandium.types.number().min(0).max(999999),
+			logID: vandium.types.number().min(0).max(999999),
+			studentNickName: vandium.types.string().min(0).max(50),
+			teacherNickName: vandium.types.string().min(0).max(50),
+			teacherID: vandium.types.number().min(0).max(999999),
+			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
+			activityDetails: vandium.types.string().allow('').min(0).max(1000)
+			}
+		},
 		(event, context, callback) =>
 		{
 			let index = event.queryStringParameters.index;
@@ -108,6 +119,20 @@ module.exports.handler = vandium.api()
 							return connection.query(selectQueryteacherID + selectQuerystudentID);
 						}).then(function (results)
 						{
+							if(results[0].length==0){
+								callback(null,
+									{
+										"statusCode": 300,
+										"body": "Teacher nickname not found"
+									});
+								}
+							else if(results[1].length==0){
+								callback(null,
+									{
+										"statusCode": 300,
+										"body": "Student nickname not found"
+									});
+							}
 							insertQuery2 += `(${results[0][0].teacherID},${studentID=results[1][0].studentID},${event.body.activityDetails ? "'" + event.body.activityDetails+ "'" : 'NULL'},'${event.body.activityType}',NOW());`;
 							var result = connection.query(insertQuery2);
 							return result;

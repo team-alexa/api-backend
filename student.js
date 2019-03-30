@@ -7,12 +7,26 @@ module.exports.handler = vandium.api()
 	{
 		"Access-Control-Allow-Origin": "*"
 	})
-	.protection( {
+	.protection(
+	{
 
 		// "fail" mode will prevent execution of the method handler
 		mode: 'fail'
 	})
-	.GET((event, context, callback) =>
+	.GET({
+		queryStringParameters: {
+			status: vandium.types.string().valid('active', 'inactive'),
+			studentID: vandium.types.number().min(0).max(999999),
+			updatedstudentID: vandium.types.number().min(0).max(999999),
+			firstName: vandium.types.string().min(0).max(50),
+			lastName: vandium.types.string().min(0).max(50),
+			birthDate: vandium.types.date(),
+			foodAllergies: vandium.types.string().allow('').min(0).max(50),
+			medical: vandium.types.string().allow('').min(0).max(150),
+			teacherID: vandium.types.number().min(0).max(999999),
+			nickName: vandium.types.string().allow('').min(0).max(50),
+		}
+	},(event, context, callback) =>
 	{
 		let index = event.queryStringParameters.index;
 		var selectQuery = 'SELECT * FROM  nextdoormilwaukeedb.Students s';
@@ -45,7 +59,7 @@ module.exports.handler = vandium.api()
 			})
 
 		}
-		selectQuery+=' ORDER BY s.lastName ASC'
+		selectQuery += ' ORDER BY s.lastName ASC'
 		if (index != null)
 		{
 			selectQuery += ` limit ${index},25;`
@@ -61,6 +75,7 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
+			status: vandium.types.string().valid('active', 'inactive'),
 			studentID: vandium.types.number().min(0).max(999999),
 			updatedstudentID: vandium.types.number().min(0).max(999999),
 			firstName: vandium.types.string().min(0).max(50),
@@ -69,20 +84,22 @@ module.exports.handler = vandium.api()
 			foodAllergies: vandium.types.string().allow('').min(0).max(50),
 			medical: vandium.types.string().allow('').min(0).max(150),
 			teacherID: vandium.types.number().min(0).max(999999),
-			nickName: vandium.types.string().allow('').min(0).max(50),
+			nickName: vandium.types.string().allow('').min(0).max(50)
 		}
 	}, (event, context, callback) =>
 	{
 		switch (event.body.method)
 		{
 			case "new":
-				if(event.body.studentID!=null){
-				var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-				insertQuery += `(${event.body.studentID},'${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+				if (event.body.studentID != null)
+				{
+					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
+					insertQuery += `(${event.body.studentID},'new',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
-				else{
-					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-				insertQuery += `(UUID(),'${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+				else
+				{
+					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
+					insertQuery += `(UUID(),'status',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
 				var database = new Database();
 				database.query(insertQuery, callback);
@@ -90,93 +107,96 @@ module.exports.handler = vandium.api()
 				break;
 			case "update":
 				var updateQuery = 'UPDATE nextdoormilwaukeedb.Students s SET'
-					var postParams = Object.keys(event.body);
-					var firstParam = true;
-					postParams.map(param =>
+				var postParams = Object.keys(event.body);
+				var firstParam = true;
+				postParams.map(param =>
+				{
+					if (param != 'method')
 					{
-						if (param != 'method' && param != 'studentID' && param != 'updatedstudentID')
+						if (firstParam)
 						{
-							if (firstParam)
-							{
-								firstParam = false
-							}
-							else
-							{
-								updateQuery += `,`;
-							}
-							if (param == 'birthDate')
-							{
-								updateQuery += ` s.birthDate='${getBirthDate(event.body.birthDate)}'`
-							}
-							else
-							{
-								updateQuery += ` s.${param}='${event.body[param]}'`
-							}
+							firstParam = false
 						}
-					})
-					if (event.body.updatedstudentID != null)
-					{
-					updateQuery += `, s.studentID=${event.body.updatedstudentID} ,`
-					}
-					else{
-					updateQuery += `, s.studentID=${event.body.studentID} ,`
-					}
-					if (event.body.firstName == null || event.body.lastName == null)
-					{
-						var connection;
-						var NameQuery = `SELECT firstName, lastName FROM  nextdoormilwaukeedb.Students s where s.studentID=${event.body.studentID}`
-						mysqlpromise.createConnection(config.databaseoptions)
-							.then(function (conn)
-							{
-								connection = conn;
-								return connection.query(NameQuery);
-							}).then(function (results)
-							{
-								if (event.body.firstName == null)
+						else
+						{
+							updateQuery += `,`;
+						}
+						switch (query)
+						{
+							case "birthDate":
+								updateQuery += ` s.birthDate='${getBirthDate(event.body.birthDate)}'`
+								break;
+							case "updatedstudentID":
+								updateQuery += `s.studentID=${event.body.updatedstudentID}`
+								break;
+							case "studentID":
+								if (!event.body.updatedstudentID)
 								{
-									updateQuery += `s.fullName='${results[0].firstName} ${event.body.lastName}',`
+									updateQuery += `, s.studentID=${event.body.studentID}`
 								}
-								else
-								{
-									updateQuery += `s.fullName='${event.body.firstName} ${results[0].lastName}',`
-								}
-								updateQuery += ` WHERE s.studentID=${event.body.studentID};`
-								var result = connection.query(updateQuery);
-								connection.end();
-								return result;
-							}).then(function (results)
+								break;
+							default:
+								updateQuery += ` s.${param}='${event.body[param]}'`
+								break;
+						}
+					}
+				})
+				if (event.body.firstName == null || event.body.lastName == null)
+				{
+					var connection;
+					var NameQuery = `SELECT firstName, lastName FROM  nextdoormilwaukeedb.Students s where s.studentID=${event.body.studentID}`
+					mysqlpromise.createConnection(config.databaseoptions)
+						.then(function (conn)
+						{
+							connection = conn;
+							return connection.query(NameQuery);
+						}).then(function (results)
+						{
+							if (event.body.firstName == null)
 							{
-								callback(null,
-								{
-									"statusCode": 200,
-									"body": results
-								});
-								connection.end();
-							})
-							.catch(function (error)
+								updateQuery += `, s.fullName='${results[0].firstName} ${event.body.lastName}'`
+							}
+							else
 							{
-								if (connection && connection.end) connection.end();
-								callback(null,
-								{
-									"statusCode": 400,
-									"body": error
-								});
+								updateQuery += `, s.fullName='${event.body.firstName} ${results[0].lastName}'`
+							}
+							updateQuery += ` WHERE s.studentID=${event.body.studentID};`
+							var result = connection.query(updateQuery);
+							connection.end();
+							return result;
+						}).then(function (results)
+						{
+							callback(null,
+							{
+								"statusCode": 200,
+								"body": results
 							});
+							connection.end();
+						})
+						.catch(function (error)
+						{
+							if (connection && connection.end) connection.end();
+							callback(null,
+							{
+								"statusCode": 400,
+								"body": error
+							});
+						});
 
-					}
-					else
-					{
-						updateQuery += `s.fullName='${event.body.firstName} ${event.body.lastName}'`
-						updateQuery += ` WHERE s.studentID=${event.body.studentID};`
-						var database = new Database();
-						database.query(updateQuery, callback);
-						database.end();
-					}
-				
+				}
+				else
+				{
+					updateQuery += `, s.fullName='${event.body.firstName} ${event.body.lastName}'`
+					updateQuery += ` WHERE s.studentID=${event.body.studentID};`
+					var database = new Database();
+					database.query(updateQuery, callback);
+					database.end();
+				}
+
 
 				break;
 			case "delete":
-				var deleteQuery = `DELETE FROM nextdoormilwaukeedb.Students WHERE studentID=${event.body.studentID} ;`
+				var deleteQuery = `UPDATE nextdoormilwaukeedb.Students s SET s.status='inactive' WHERE studentID=${event.body.studentID} ;`
 				var database = new Database();
 				database.query(deleteQuery, callback);
 				database.end();
