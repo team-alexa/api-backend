@@ -31,16 +31,18 @@ module.exports.handler = vandium.api()
 		}
 	},(event, context, callback) =>
 	{
-		let index = event.queryStringParameters.index;
+		var index =null;
 		var selectQuery = 'SELECT * FROM  nextdoormilwaukeedb.Students s';
+		if(typeof event.queryStringParameters.index != "undefined"){
+			index=event.queryStringParameters.index
+			delete event.queryStringParameters.index;
+		}
 		var queryStringParams = Object.keys(event.queryStringParameters);
 		var firstParam = true;
 		if (queryStringParams.length != 0)
 		{
-			queryStringParams.map(query =>
+			queryStringParams.map((query,i) =>
 			{
-				if (query != 'index')
-				{
 					if (firstParam)
 					{
 						selectQuery += ` where`;
@@ -58,7 +60,6 @@ module.exports.handler = vandium.api()
 						if (i!=queryStringParams.length-1){
 							selectQuery += ` and`;
 						}
-				}
 			})
 
 		}
@@ -111,9 +112,9 @@ module.exports.handler = vandium.api()
 				var updateQuery = 'UPDATE nextdoormilwaukeedb.Students s SET'
 				var postParams = Object.keys(event.body);
 				var firstParam = true;
-				postParams.map(param =>
+				postParams.map(param,i =>
 				{
-					if (param != 'method')
+					if (param != 'method'&& param != 'studentID')
 					{
 						if (firstParam)
 						{

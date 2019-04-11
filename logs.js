@@ -17,13 +17,13 @@ module.exports.handler = vandium.api()
 		{
 			queryStringParameters: {
 			index: vandium.types.number().min(0).max(999999),
-			studentID: vandium.types.number().min(0).max(999999),
 			logID: vandium.types.number().min(0).max(999999),
+			studentID: vandium.types.number().min(0).max(999999),
 			studentNickName: vandium.types.string().min(0).max(50),
 			studentFullName: vandium.types.string().min(0).max(50),
+			teacherID: vandium.types.number().min(0).max(999999),
 			teacherNickName: vandium.types.string().min(0).max(50),
 			teacherFullName: vandium.types.string().min(0).max(50),
-			teacherID: vandium.types.number().min(0).max(999999),
 			date: vandium.types.string().min(1).max(10),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
 			activityDetails: vandium.types.string().allow('').min(0).max(1000),
@@ -37,7 +37,7 @@ module.exports.handler = vandium.api()
 			selectQuery += `ON l.studentID=s.studentID `
 			selectQuery += 'LEFT JOIN  nextdoormilwaukeedb.Teachers t '
 			selectQuery += 'ON l.teacherID = t.teacherID '
-			if(event.queryStringParameters.index){
+			if(typeof event.queryStringParameters.index != "undefined"){
 				index=event.queryStringParameters.index
 				delete event.queryStringParameters.index;
 			}
@@ -91,11 +91,13 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
-			studentID: vandium.types.number().min(0).max(999999),
 			logID: vandium.types.number().min(0).max(999999),
+			studentID: vandium.types.number().min(0).max(999999),
+			updatedstudentID: vandium.types.number().min(0).max(999999),
 			studentNickName: vandium.types.string().min(0).max(50),
-			teacherNickName: vandium.types.string().min(0).max(50),
 			teacherID: vandium.types.number().min(0).max(999999),
+			updatedteacherID: vandium.types.number().min(0).max(999999),
+			teacherNickName: vandium.types.string().min(0).max(50),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
 			activityDetails: vandium.types.string().allow('').min(0).max(1000),
 		}
@@ -175,7 +177,7 @@ module.exports.handler = vandium.api()
 				var firstParam = true;
 				postParams.map(param =>
 				{
-					if (param != 'method')
+					if (param != 'method'&& param!='updatedstudentID'&&param!='updatedteacherID')
 					{
 						if (firstParam)
 						{
@@ -185,7 +187,18 @@ module.exports.handler = vandium.api()
 						{
 							updateQuery += `,`;
 						}
-						updateQuery += ` l.${param}='${event.body[param]}'`
+						switch (param)
+						{
+							case "updatedstudentID":
+								updateQuery += ` l.studentID=${event.body.updatedstudentID}`
+								break;
+							case "updatedteacherID":
+								updateQuery += ` l.teacherID=${event.body.updatedteacherID}`
+								break;	
+							default:
+								updateQuery += ` l.${param}='${event.body[param]}'`
+								break;
+						}
 					}
 				})
 				updateQuery += ` WHERE l.logID = ${event.body.logID};`
