@@ -21,6 +21,16 @@ plugins:
 provider:
   name: aws
   runtime: nodejs8.10
+  apiKeys:
+    - myFirstKey
+  usagePlan:
+    quota:
+      limit: 5000
+      offset: 2
+      period: MONTH
+    throttle:
+      burstLimit: 200
+      rateLimit: 100
 
 # you can overwrite defaults here
 #  stage: dev
@@ -33,31 +43,12 @@ functions:
           method: get
           cors: true
           path: students
-          request:
-            parameters:
-              querystrings:
-                studentID: false
-                teacherID: false
-                firstName: false
-                lastName: false
-                index: false
-                fullName: false
+          private: true
       - http:
           method: post
           cors: true
           path: students
-          request:
-            parameters:
-              querystrings:
-                method: True
-                firstName: True
-                lastName: True
-                birthDate: True
-                studentID: True
-                medical: false
-                foodAllergies: false
-                teacherID: true
-                studentNickName: false
+          private: true
                                  
   teacher:
     handler: teacher.handler
@@ -66,17 +57,12 @@ functions:
           method: get
           cors: true
           path: teachers
-          request:
-            parameters:
-              querystrings:
-                teacherID: false
-                firstName: false
-                lastName: false
-                fullName: false
+          private: true
       - http:
           method: post
           cors: true
           path: teachers
+          private: true
 
 
   logs:
@@ -86,17 +72,9 @@ functions:
           method: get
           cors: true
           path: logs
-          request:
-            parameters:
-              querystrings:
-                studentID: false
-                teacherID: false
-                logID: false
-                date: false
-                firstName: false
-                lastName: false
-                index: false
+          private: true
       - http:
           method: post
+          private: true
           cors: true
           path: logs 
