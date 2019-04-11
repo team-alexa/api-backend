@@ -16,25 +16,31 @@ module.exports.handler = vandium.api()
 	})
 	.GET({
 		queryStringParameters: {
+			index: vandium.types.number().min(0).max(999999),
 			status: vandium.types.string().valid('active', 'inactive'),
 			teacherID: vandium.types.number().min(0).max(999999),
 			updatedteacherID: vandium.types.number().min(0).max(999999),
 			firstName: vandium.types.string().min(0).max(50),
 			lastName: vandium.types.string().min(0).max(50),
 			nickName: vandium.types.string().allow('').min(0).max(50),
+			fullName: vandium.types.string().min(0).max(100),
+			status: vandium.types.string().valid('active','inactive'),
 		}
 	},(event, context, callback) =>
 	{
-		let index = event.queryStringParameters.index;
+		var index =null;
 		var selectQuery = 'SELECT * FROM  nextdoormilwaukeedb.Teachers t';
+		if(typeof event.queryStringParameters.index != "undefined"){
+			index=event.queryStringParameters.index
+			delete event.queryStringParameters.index;
+		}
 		var queryStringParams = Object.keys(event.queryStringParameters);
 		var firstParam = true;
 		if (queryStringParams.length != 0)
 		{
-			queryStringParams.map(query =>
+			queryStringParams.map((query,i) =>
 			{
-				if (query != 'index')
-				{
+		
 					if (firstParam)
 					{
 						selectQuery += ` where`;
@@ -44,15 +50,18 @@ module.exports.handler = vandium.api()
 					{
 						selectQuery += ` and`;
 					}
-					if (query == 'fullName')
+					switch (query)
 					{
-						selectQuery += ` t.${query} like '%${event.queryStringParameters[query]}%'`
-					}
-					else
-					{
+						case "fullName":
+							selectQuery += ` t.${query} like '%${event.queryStringParameters[query]}%'`
+							break;
+						default:
 						selectQuery += ` t.${query}='${event.queryStringParameters[query]}'`
+							break;
 					}
-				}
+					if (i!=queryStringParams.length-1){
+						selectQuery += ` and`;
+					}
 			})
 		}
 		selectQuery += ' ORDER BY t.lastName ASC'
@@ -70,6 +79,7 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
+			status: vandium.types.string().valid('admin', 'teacher'),
 			status: vandium.types.string().valid('active', 'inactive'),
 			teacherID: vandium.types.number().min(0).max(999999).required(),
 			updatedteacherID: vandium.types.number().min(0).max(999999),
@@ -82,8 +92,8 @@ module.exports.handler = vandium.api()
 		switch (event.body.method)
 		{
 			case "new":
-				var insertQuery = `INSERT INTO nextdoormilwaukeedb.Teachers(teacherID,status,firstName,lastName,fullName,nickName) VALUES`
-				insertQuery += `(${event.body.teacherID},'actice',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}',${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+				var insertQuery = `INSERT INTO nextdoormilwaukeedb.Teachers(teacherID,role,status,firstName,lastName,fullName,nickName) VALUES`
+				insertQuery += `(${event.body.teacherID}, '${event.body.role}','actice',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}',${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				var database = new Database();
 				database.query(insertQuery, callback);
 				database.end();
@@ -93,9 +103,9 @@ module.exports.handler = vandium.api()
 				var updateQuery = 'UPDATE nextdoormilwaukeedb.Teachers t SET'
 				var postParams = Object.keys(event.body);
 				var firstParam = true;
-				postParams.map(param =>
+				postParams.map((param,i) =>
 				{
-					if (param != 'method' && param != 'teacherID' && param != 'updatedteacherID')
+					if (param != 'method' && param != 'teacherID')
 					{
 						if (firstParam)
 						{
@@ -109,12 +119,6 @@ module.exports.handler = vandium.api()
 						{
 							case "updatedteacherID":
 								updateQuery += `, t.teacherID=${event.body.updatedteacherID}`
-								break;
-							case "teacherID":
-								if (!event.body.updatedteacherID)
-								{
-									updateQuery += `, t.teacherID=${event.body.teacherID}`
-								}
 								break;
 							default:
 								updateQuery += ` t.${param}='${event.body[param]}'`

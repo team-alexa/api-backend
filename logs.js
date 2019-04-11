@@ -16,23 +16,31 @@ module.exports.handler = vandium.api()
 	.GET(
 		{
 			queryStringParameters: {
-			studentID: vandium.types.number().min(0).max(999999),
+			index: vandium.types.number().min(0).max(999999),
 			logID: vandium.types.number().min(0).max(999999),
+			studentID: vandium.types.number().min(0).max(999999),
 			studentNickName: vandium.types.string().min(0).max(50),
-			teacherNickName: vandium.types.string().min(0).max(50),
+			studentFullName: vandium.types.string().min(0).max(50),
 			teacherID: vandium.types.number().min(0).max(999999),
+			teacherNickName: vandium.types.string().min(0).max(50),
+			teacherFullName: vandium.types.string().min(0).max(50),
+			date: vandium.types.string().min(1).max(10),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
-			activityDetails: vandium.types.string().allow('').min(0).max(1000)
+			activityDetails: vandium.types.string().allow('').min(0).max(1000),
 			}
 		},
 		(event, context, callback) =>
 		{
-			let index = event.queryStringParameters.index;
+			var index=null;
 			var selectQuery = 'SELECT l.logID,l.teacherID,l.studentID,l.activityDetails,l.activityType,l.date,s.fullName AS studentFullName, t.fullName AS teacherFullName FROM nextdoormilwaukeedb.logs l ';
 			selectQuery += 'LEFT JOIN nextdoormilwaukeedb.Students s '
 			selectQuery += `ON l.studentID=s.studentID `
 			selectQuery += 'LEFT JOIN  nextdoormilwaukeedb.Teachers t '
 			selectQuery += 'ON l.teacherID = t.teacherID '
+			if(typeof event.queryStringParameters.index != "undefined"){
+				index=event.queryStringParameters.index
+				delete event.queryStringParameters.index;
+			}
 			var queryStringParams = Object.keys(event.queryStringParameters);
 			var firstParam = true;
 			if (queryStringParams.length != 0)
@@ -49,7 +57,7 @@ module.exports.handler = vandium.api()
 						switch (query)
 						{
 							case "date":
-								selectQuery += ` DATE_FORMAT(l.date,'%m-%d-%Y') like '%${event.queryStringParameters[query]}%' or DATE_FORMAT(l.date,'%m-%d-%y') like '%${event.queryStringParameters[query]}%'`
+								selectQuery += ` DATE_FORMAT(l.date,'%m-%d-%Y') like '%${event.queryStringParameters[query]}%' or DATE_FORMAT(l.date,'%m-%d-%y') like '%$${event.queryStringParameters[query]}%'`
 								break;
 							case "studentFullName":
 								selectQuery += ` s.fullName like '%${event.queryStringParameters.studentFullName}%'`
@@ -62,13 +70,13 @@ module.exports.handler = vandium.api()
 								break;
 						}
 						if (i!=queryStringParams.length-1){
-						selectQuery += ` and`;
+							selectQuery += ` and`;
 						}
 					}
 				})
 			}
 			selectQuery += ' ORDER BY l.date DESC'
-			if (index != null)
+			if (index)
 			{
 				selectQuery += ` limit ${index},25`
 			}
@@ -83,13 +91,15 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
-			studentID: vandium.types.number().min(0).max(999999),
 			logID: vandium.types.number().min(0).max(999999),
+			studentID: vandium.types.number().min(0).max(999999),
+			updatedstudentID: vandium.types.number().min(0).max(999999),
 			studentNickName: vandium.types.string().min(0).max(50),
-			teacherNickName: vandium.types.string().min(0).max(50),
 			teacherID: vandium.types.number().min(0).max(999999),
+			updatedteacherID: vandium.types.number().min(0).max(999999),
+			teacherNickName: vandium.types.string().min(0).max(50),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
-			activityDetails: vandium.types.string().allow('').min(0).max(1000)
+			activityDetails: vandium.types.string().allow('').min(0).max(1000),
 		}
 	}, (event, context, callback) =>
 	{
@@ -122,14 +132,14 @@ module.exports.handler = vandium.api()
 							if(results[0].length==0){
 								callback(null,
 									{
-										"statusCode": 300,
+										"statusCode": 200,
 										"body": "Teacher nickname not found"
 									});
 								}
 							else if(results[1].length==0){
 								callback(null,
 									{
-										"statusCode": 300,
+										"statusCode": 200,
 										"body": "Student nickname not found"
 									});
 							}
@@ -167,7 +177,7 @@ module.exports.handler = vandium.api()
 				var firstParam = true;
 				postParams.map(param =>
 				{
-					if (param != 'method')
+					if (param != 'method'&& param!='updatedstudentID'&&param!='updatedteacherID')
 					{
 						if (firstParam)
 						{
@@ -177,7 +187,18 @@ module.exports.handler = vandium.api()
 						{
 							updateQuery += `,`;
 						}
-						updateQuery += ` l.${param}='${event.body[param]}'`
+						switch (param)
+						{
+							case "updatedstudentID":
+								updateQuery += ` l.studentID=${event.body.updatedstudentID}`
+								break;
+							case "updatedteacherID":
+								updateQuery += ` l.teacherID=${event.body.updatedteacherID}`
+								break;	
+							default:
+								updateQuery += ` l.${param}='${event.body[param]}'`
+								break;
+						}
 					}
 				})
 				updateQuery += ` WHERE l.logID = ${event.body.logID};`
@@ -194,3 +215,8 @@ module.exports.handler = vandium.api()
 				break;
 		}
 	});
+	function formatDate(date)
+{
+	var formattedDate = new Date(date);
+	return `${formattedDate.getMonth()}-${formattedDate.getDate()}-${formattedDate.getFullYear()}`;
+}

@@ -15,6 +15,7 @@ module.exports.handler = vandium.api()
 	})
 	.GET({
 		queryStringParameters: {
+			index: vandium.types.number().min(0).max(999999),
 			status: vandium.types.string().valid('active', 'inactive'),
 			studentID: vandium.types.number().min(0).max(999999),
 			updatedstudentID: vandium.types.number().min(0).max(999999),
@@ -25,37 +26,40 @@ module.exports.handler = vandium.api()
 			medical: vandium.types.string().allow('').min(0).max(150),
 			teacherID: vandium.types.number().min(0).max(999999),
 			nickName: vandium.types.string().allow('').min(0).max(50),
+			fullName: vandium.types.string().min(0).max(100),
+			status: vandium.types.string().valid('active','inactive'),
 		}
 	},(event, context, callback) =>
 	{
-		let index = event.queryStringParameters.index;
+		var index =null;
 		var selectQuery = 'SELECT * FROM  nextdoormilwaukeedb.Students s';
+		if(typeof event.queryStringParameters.index != "undefined"){
+			index=event.queryStringParameters.index
+			delete event.queryStringParameters.index;
+		}
 		var queryStringParams = Object.keys(event.queryStringParameters);
 		var firstParam = true;
 		if (queryStringParams.length != 0)
 		{
-			queryStringParams.map(query =>
+			queryStringParams.map((query,i) =>
 			{
-				if (query != 'index')
-				{
 					if (firstParam)
 					{
 						selectQuery += ` where`;
 						firstParam = false
 					}
-					else
-					{
-						selectQuery += ` and`;
-					}
-					if (query != 'fullName')
-					{
-						selectQuery += ` s.${query}='${event.queryStringParameters[query]}'`
-					}
-					else
-					{
-						selectQuery += ` s.${query} like '%${event.queryStringParameters[query]}%'`
-					}
-				}
+					switch (query)
+						{
+							case "fullName":
+								selectQuery += ` s.${query} like '%${event.queryStringParameters[query]}%'`
+								break;
+							default:
+							selectQuery += ` s.${query}='${event.queryStringParameters[query]}'`
+								break;
+						}
+						if (i!=queryStringParams.length-1){
+							selectQuery += ` and`;
+						}
 			})
 
 		}
@@ -64,7 +68,6 @@ module.exports.handler = vandium.api()
 		{
 			selectQuery += ` limit ${index},25;`
 		}
-
 		var database = new Database();
 		database.query(selectQuery, callback);
 		database.end();
@@ -109,9 +112,9 @@ module.exports.handler = vandium.api()
 				var updateQuery = 'UPDATE nextdoormilwaukeedb.Students s SET'
 				var postParams = Object.keys(event.body);
 				var firstParam = true;
-				postParams.map(param =>
+				postParams.map(param,i =>
 				{
-					if (param != 'method')
+					if (param != 'method'&& param != 'studentID')
 					{
 						if (firstParam)
 						{
@@ -121,19 +124,13 @@ module.exports.handler = vandium.api()
 						{
 							updateQuery += `,`;
 						}
-						switch (query)
+						switch (param)
 						{
 							case "birthDate":
 								updateQuery += ` s.birthDate='${getBirthDate(event.body.birthDate)}'`
 								break;
 							case "updatedstudentID":
-								updateQuery += `s.studentID=${event.body.updatedstudentID}`
-								break;
-							case "studentID":
-								if (!event.body.updatedstudentID)
-								{
-									updateQuery += `, s.studentID=${event.body.studentID}`
-								}
+								updateQuery += ` s.studentID=${event.body.updatedstudentID}`
 								break;
 							default:
 								updateQuery += ` s.${param}='${event.body[param]}'`
@@ -169,7 +166,7 @@ module.exports.handler = vandium.api()
 							callback(null,
 							{
 								"statusCode": 200,
-								"body": results
+								"body": results.insertId
 							});
 							connection.end();
 						})
