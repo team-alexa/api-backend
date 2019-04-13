@@ -79,7 +79,7 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
-			status: vandium.types.string().valid('admin', 'teacher'),
+			role: vandium.types.string().valid('admin', 'teacher'),
 			status: vandium.types.string().valid('active', 'inactive'),
 			teacherID: vandium.types.number().min(0).max(999999).required(),
 			updatedteacherID: vandium.types.number().min(0).max(999999),
@@ -93,7 +93,7 @@ module.exports.handler = vandium.api()
 		{
 			case "new":
 				var insertQuery = `INSERT INTO nextdoormilwaukeedb.Teachers(teacherID,role,status,firstName,lastName,fullName,nickName) VALUES`
-				insertQuery += `(${event.body.teacherID}, '${event.body.role}','actice',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}',${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+				insertQuery += `(${event.body.teacherID}, '${event.body.role}','active',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}',${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				var database = new Database();
 				database.query(insertQuery, callback);
 				database.end();

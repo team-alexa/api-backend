@@ -78,16 +78,28 @@ module.exports.handler = vandium.api()
 		body:
 		{
 			method: vandium.types.string().valid('new', 'update', 'delete').required(),
-			status: vandium.types.string().valid('active', 'inactive'),
-			studentID: vandium.types.number().min(0).max(999999),
-			updatedstudentID: vandium.types.number().min(0).max(999999),
-			firstName: vandium.types.string().min(0).max(50),
-			lastName: vandium.types.string().min(0).max(50),
-			birthDate: vandium.types.date(),
-			foodAllergies: vandium.types.string().allow('').min(0).max(50),
-			medical: vandium.types.string().allow('').min(0).max(150),
-			teacherID: vandium.types.number().min(0).max(999999),
-			nickName: vandium.types.string().allow('').min(0).max(50)
+            status: vandium.types.string().valid('active', 'inactive'),
+            studentID: vandium.types.number().min(0).max(999999),
+            updatedstudentID: vandium.types.number().min(0).max(999999),
+            firstName: vandium.types.string().min(0).max(50),
+            lastName: vandium.types.string().min(0).max(50),
+            birthDate: vandium.types.date(),
+            foodAllergies: vandium.types.string().allow('').min(0).max(50),
+            medical: vandium.types.string().allow('').min(0).max(150),
+            nickName: vandium.types.string().allow('').min(0).max(50),
+            teacherID: vandium.types.number().min(0).max(999999),
+            students:vandium.types.array().items( {
+                student: vandium.types.object().keys({
+                    studentID: vandium.types.number().min(0).max(999999).required(),
+                    firstName: vandium.types.string().min(0).max(50).required(),
+                    lastName: vandium.types.string().min(0).max(50).required(),
+                    birthDate: vandium.types.date().required(),
+                    foodAllergies: vandium.types.string().allow('').min(0).max(50).required(),
+                    medical: vandium.types.string().allow('').min(0).max(150).required(),
+                    nickName: vandium.types.string().allow('').min(0).max(50).required(),
+                    teacherID: vandium.types.number().min(0).max(999999).required(),
+                  })
+            }),
 		}
 	}, (event, context, callback) =>
 	{
@@ -97,12 +109,12 @@ module.exports.handler = vandium.api()
 				if (event.body.studentID != null)
 				{
 					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-					insertQuery += `(${event.body.studentID},'new',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+					insertQuery += `(${event.body.studentID},'active',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
 				else
 				{
 					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-					insertQuery += `(UUID(),'status',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+					insertQuery += `(UUID(),'active',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
 				var database = new Database();
 				database.query(insertQuery, callback);
