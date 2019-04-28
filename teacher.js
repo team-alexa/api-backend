@@ -115,7 +115,7 @@ module.exports.handler = vandium.api()
 						{
 							updateQuery += `,`;
 						}
-						switch (query)
+						switch (param)
 						{
 							case "updatedteacherID":
 								updateQuery += `, t.teacherID=${event.body.updatedteacherID}`

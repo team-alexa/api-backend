@@ -24,7 +24,7 @@ module.exports.handler = vandium.api()
 			teacherID: vandium.types.number().min(0).max(999999),
 			teacherNickName: vandium.types.string().min(0).max(50),
 			teacherFullName: vandium.types.string().min(0).max(50),
-			date: vandium.types.string().min(1).max(10),
+			date: vandium.types.date(),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
 			activityDetails: vandium.types.string().allow('').min(0).max(1000),
 			}
@@ -57,7 +57,7 @@ module.exports.handler = vandium.api()
 						switch (query)
 						{
 							case "date":
-								selectQuery += ` DATE_FORMAT(l.date,'%m-%d-%Y') like '%${event.queryStringParameters[query]}%' or DATE_FORMAT(l.date,'%m-%d-%y') like '%$${event.queryStringParameters[query]}%'`
+								selectQuery += ` DATE_FORMAT(l.date,'%m-%d-%Y') like '${formatDate(event.queryStringParameters.date)}'`
 								break;
 							case "studentFullName":
 								selectQuery += ` s.fullName like '%${event.queryStringParameters.studentFullName}%'`
@@ -76,7 +76,7 @@ module.exports.handler = vandium.api()
 				})
 			}
 			selectQuery += ' ORDER BY l.date DESC'
-			if (index)
+			if (index!=null)
 			{
 				selectQuery += ` limit ${index},25`
 			}
@@ -97,6 +97,7 @@ module.exports.handler = vandium.api()
 			studentNickName: vandium.types.string().min(0).max(50),
 			teacherID: vandium.types.number().min(0).max(999999),
 			updatedteacherID: vandium.types.number().min(0).max(999999),
+			date:vandium.types.date(),
 			teacherNickName: vandium.types.string().min(0).max(50),
 			activityType: vandium.types.string().valid('Food', 'Nap', 'Diaper', 'Injury', 'Accomplishment', 'Activity', 'Needs', 'Anecdotal'),
 			activityDetails: vandium.types.string().allow('').min(0).max(1000),
@@ -109,7 +110,7 @@ module.exports.handler = vandium.api()
 				if (event.body.studentID != null && event.body.teacherID != null)
 				{
 					var insertQuery = `INSERT INTO nextdoormilwaukeedb.logs (teacherID,studentID,activityDetails,activityType,date) VALUES`;
-					insertQuery += `(${event.body.teacherID},${event.body.studentID},'${event.body.activityDetails ? "'" + event.body.activityDetails+ "'" : 'NULL'}','${event.body.activityType}',NOW());`;
+					insertQuery += `(${event.body.teacherID},${event.body.studentID},${event.body.activityDetails ? "'" + event.body.activityDetails+ "'" : 'NULL'},'${event.body.activityType}',${event.body.date ? "'" + formatDateTime(event.body.date)+ "'" : 'Now()'});`;
 					var database = new Database();
 					database.query(insertQuery, callback);
 					database.end();
@@ -132,18 +133,18 @@ module.exports.handler = vandium.api()
 							if(results[0].length==0){
 								callback(null,
 									{
-										"statusCode": 200,
+										"statusCode": 400,
 										"body": "Teacher nickname not found"
 									});
 								}
 							else if(results[1].length==0){
 								callback(null,
 									{
-										"statusCode": 200,
+										"statusCode": 410,
 										"body": "Student nickname not found"
 									});
 							}
-							insertQuery2 += `(${results[0][0].teacherID},${studentID=results[1][0].studentID},${event.body.activityDetails ? "'" + event.body.activityDetails+ "'" : 'NULL'},'${event.body.activityType}',NOW());`;
+							insertQuery2 += `(${results[0][0].teacherID},${studentID=results[1][0].studentID},${event.body.activityDetails ? "'" + event.body.activityDetails+ "'" : 'NULL'},'${event.body.activityType}',${event.body.date ? "'" + formatDateTime(event.body.date)+ "'" : 'Now()'});`;
 							var result = connection.query(insertQuery2);
 							return result;
 						}).then(function (results)
@@ -194,7 +195,10 @@ module.exports.handler = vandium.api()
 								break;
 							case "updatedteacherID":
 								updateQuery += ` l.teacherID=${event.body.updatedteacherID}`
-								break;	
+								break;
+							case "date":
+								updateQuery += ` l.date='${formatDateTime(event.body.date)}'`
+								break;
 							default:
 								updateQuery += ` l.${param}='${event.body[param]}'`
 								break;
@@ -215,8 +219,15 @@ module.exports.handler = vandium.api()
 				break;
 		}
 	});
-	function formatDate(date)
+function formatDate(date)
 {
 	var formattedDate = new Date(date);
-	return `${formattedDate.getMonth()}-${formattedDate.getDate()}-${formattedDate.getFullYear()}`;
+	 var day = formattedDate.getDate();
+    var month = formattedDate.getMonth() + 1; //Month from 0 to 11
+    var year = formattedDate.getFullYear();
+	return `${(month<=9 ? '0' + month : month)}-${(day <= 9 ? '0' + day : day)}-${year}`;
+}
+function formatDateTime(date){
+	var formattedDateTime = new Date(date);
+	return formattedDateTime.toISOString().slice(0, 19).replace('T', ' ');
 }

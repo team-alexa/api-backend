@@ -18,6 +18,7 @@ service: aws-nodejs # Next Door API
 # frameworkVersion: "=X.X.X"
 plugins:
   - serverless-offline
+  - serverless-mocha-plugin
 provider:
   name: aws
   runtime: nodejs8.10

@@ -109,12 +109,12 @@ module.exports.handler = vandium.api()
 				if (event.body.studentID != null)
 				{
 					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-					insertQuery += `(${event.body.studentID},'active',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+					insertQuery += `(${event.body.studentID},'active','${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
 				else
 				{
 					var insertQuery = `INSERT INTO nextdoormilwaukeedb.Students(studentID,status,firstName,lastName,fullName,birthDate,foodAllergies,medical,teacherID,nickName) VALUES`
-					insertQuery += `(UUID(),'active',${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
+					insertQuery += `(UUID(),'active','${event.body.firstName}','${event.body.lastName}','${event.body.firstName} ${event.body.lastName}','${getBirthDate(event.body.birthDate)}',${event.body.foodAllergies ? "'" + event.body.foodAllergies+ "'" : 'NULL'},${event.body.medical ? "'" + event.body.medical+ "'" : 'NULL'},${event.body.teacherID},${event.body.nickName ? "'" + event.body.nickName+ "'" : 'NULL'});`
 				}
 				var database = new Database();
 				database.query(insertQuery, callback);
@@ -124,7 +124,7 @@ module.exports.handler = vandium.api()
 				var updateQuery = 'UPDATE nextdoormilwaukeedb.Students s SET'
 				var postParams = Object.keys(event.body);
 				var firstParam = true;
-				postParams.map(param,i =>
+				postParams.map((param,i) =>
 				{
 					if (param != 'method'&& param != 'studentID')
 					{
@@ -216,6 +216,6 @@ module.exports.handler = vandium.api()
 
 function getBirthDate(date)
 {
-	var jsonBirthDate = new Date(date);
-	return `${jsonBirthDate.getFullYear()}-${jsonBirthDate.getMonth()}-${jsonBirthDate.getDate()}`;
+	var formattedDate = new Date(date);
+	return `${formattedDate.getFullYear()}-${formattedDate.getMonth()+1}-${formattedDate.getDate()}`;
 }
