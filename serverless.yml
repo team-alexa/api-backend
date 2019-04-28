@@ -18,11 +18,12 @@ service: aws-nodejs # Next Door API
 # frameworkVersion: "=X.X.X"
 plugins:
   - serverless-offline
+  - serverless-mocha-plugin
 provider:
   name: aws
   runtime: nodejs8.10
   apiKeys:
-    - myFirstKey
+    - apiKey
   usagePlan:
     quota:
       limit: 5000
@@ -43,12 +44,12 @@ functions:
           method: get
           cors: true
           path: students
-          private: true
+          private: false
       - http:
           method: post
           cors: true
           path: students
-          private: true
+          private: false
                                  
   teacher:
     handler: teacher.handler
@@ -57,12 +58,12 @@ functions:
           method: get
           cors: true
           path: teachers
-          private: true
+          private: false
       - http:
           method: post
           cors: true
           path: teachers
-          private: true
+          private: false
 
 
   logs:
@@ -72,9 +73,9 @@ functions:
           method: get
           cors: true
           path: logs
-          private: true
+          private: false
       - http:
           method: post
-          private: true
+          private: false
           cors: true
           path: logs 
