@@ -170,7 +170,7 @@ module.exports.handler = vandium.api()
 				}
 				else
 				{
-					updateQuery += `t.fullName='${event.body.firstName} ${event.body.lastName}'`
+					updateQuery += `, t.fullName='${event.body.firstName} ${event.body.lastName}'`
 					updateQuery += ` WHERE t.teacherID=${event.body.teacherID};`
 					var database = new Database();
 					database.query(updateQuery, callback);
